@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
@@ -23,44 +24,173 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Roles
-        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $pustakawanRole = Role::firstOrCreate(['name' => 'pustakawan', 'guard_name' => 'web']);
-        $dosenRole = Role::firstOrCreate(['name' => 'dosen', 'guard_name' => 'web']);
-        $mahasiswaRole = Role::firstOrCreate(['name' => 'mahasiswa', 'guard_name' => 'web']);
-        $tamuRole = Role::firstOrCreate(['name' => 'tamu', 'guard_name' => 'web']);
+        // 1. Fine-grained Permissions
+        $permissions = [
+            // Modul Katalog & Koleksi Buku
+            'books.view',
+            'books.create',
+            'books.edit',
+            'books.delete',
+            'books.manage_copies',
 
-        // 2. Users for each role
+            // Modul E-Book & Digital Repository
+            'ebooks.read_sample',
+            'ebooks.read_full',
+            'ebooks.download',
+            'ebooks.upload',
+
+            // Modul Sirkulasi & Peminjaman
+            'loans.view_own',
+            'loans.borrow',
+            'loans.extend',
+            'loans.return',
+            'loans.manage',
+
+            // Modul Ulasan & Rating
+            'reviews.create',
+            'reviews.moderate',
+
+            // Modul Anggota & Pengguna
+            'users.view',
+            'users.create',
+            'users.edit',
+            'users.delete',
+            'roles.manage',
+
+            // Modul Laporan & Sistem
+            'reports.view',
+            'reports.export',
+            'settings.manage',
+        ];
+
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
+        }
+
+        // 2. Roles & Permissions Mapping
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $adminRole->syncPermissions(Permission::all());
+
+        $pustakawanRole = Role::firstOrCreate(['name' => 'pustakawan', 'guard_name' => 'web']);
+        $pustakawanRole->syncPermissions([
+            'books.view',
+            'books.create',
+            'books.edit',
+            'books.delete',
+            'books.manage_copies',
+            'ebooks.read_sample',
+            'ebooks.read_full',
+            'ebooks.download',
+            'ebooks.upload',
+            'loans.view_own',
+            'loans.borrow',
+            'loans.extend',
+            'loans.return',
+            'loans.manage',
+            'reviews.create',
+            'reviews.moderate',
+            'users.view',
+            'users.create',
+            'users.edit',
+            'reports.view',
+            'reports.export',
+        ]);
+
+        $dosenRole = Role::firstOrCreate(['name' => 'dosen', 'guard_name' => 'web']);
+        $dosenRole->syncPermissions([
+            'books.view',
+            'ebooks.read_sample',
+            'ebooks.read_full',
+            'ebooks.download',
+            'ebooks.upload',
+            'loans.view_own',
+            'loans.borrow',
+            'loans.extend',
+            'loans.return',
+            'reviews.create',
+            'reports.view',
+        ]);
+
+        $mahasiswaRole = Role::firstOrCreate(['name' => 'mahasiswa', 'guard_name' => 'web']);
+        $mahasiswaRole->syncPermissions([
+            'books.view',
+            'ebooks.read_sample',
+            'ebooks.read_full',
+            'loans.view_own',
+            'loans.borrow',
+            'loans.extend',
+            'loans.return',
+            'reviews.create',
+        ]);
+
+        $tamuRole = Role::firstOrCreate(['name' => 'tamu', 'guard_name' => 'web']);
+        $tamuRole->syncPermissions([
+            'books.view',
+            'ebooks.read_sample',
+        ]);
+
+        // 3. User Accounts with various roles & access levels
+        // Role: ADMIN (Super Administrator)
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@digitech.ac.id'],
             [
-                'name' => 'Bima Administrator',
+                'name' => 'Bima Administrator, S.Kom.',
                 'password' => Hash::make('password'),
                 'nim_nidn' => 'ADM-SYS-01',
                 'faculty' => 'Biro Sistem Informasi & Teknologi',
-                'major' => 'Super Administrator',
+                'major' => 'Super Administrator & IT Infrastructure',
                 'max_borrow_quota' => 99,
             ]
         );
         $adminUser->syncRoles([$adminRole]);
 
+        // Role: ADMIN (Admin IT Cadangan / Keamanan)
+        $itSupportUser = User::updateOrCreate(
+            ['email' => 'it.support@digitech.ac.id'],
+            [
+                'name' => 'David Pratama, M.Kom.',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'ADM-SYS-02',
+                'faculty' => 'Biro Sistem Informasi & Teknologi',
+                'major' => 'Divisi Keamanan Jaringan & Database',
+                'max_borrow_quota' => 99,
+            ]
+        );
+        $itSupportUser->syncRoles([$adminRole]);
+
+        // Role: PUSTAKAWAN (Kepala Layanan Sirkulasi)
         $pustakawanUser = User::updateOrCreate(
             ['email' => 'pustakawan@digitech.ac.id'],
             [
-                'name' => 'Siti Rahmawati, S.Sos.',
+                'name' => 'Siti Rahmawati, S.Sos., M.I.Kom.',
                 'password' => Hash::make('password'),
                 'nim_nidn' => 'NIP: 19880415201201',
                 'faculty' => 'UPT Perpustakaan Terpadu',
-                'major' => 'Kepala Layanan Sirkulasi',
+                'major' => 'Kepala Layanan Sirkulasi & Koleksi',
                 'max_borrow_quota' => 99,
             ]
         );
         $pustakawanUser->syncRoles([$pustakawanRole]);
 
+        // Role: PUSTAKAWAN (Staff Meja Sirkulasi)
+        $sirkulasiUser = User::updateOrCreate(
+            ['email' => 'sirkulasi@digitech.ac.id'],
+            [
+                'name' => 'Ahmad Fauzi, A.Md.',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'NIP: 19940822201902',
+                'faculty' => 'UPT Perpustakaan Terpadu',
+                'major' => 'Staff Meja Sirkulasi & Barcode',
+                'max_borrow_quota' => 50,
+            ]
+        );
+        $sirkulasiUser->syncRoles([$pustakawanRole]);
+
+        // Role: DOSEN (Dosen Ilmu Komputer)
         $dosenUser = User::updateOrCreate(
             ['email' => 'dosen@digitech.ac.id'],
             [
-                'name' => 'Dr. Hendra Gunawan, M.T.',
+                'name' => 'Dr. Hendra Gunawan, S.Kom., M.T.',
                 'password' => Hash::make('password'),
                 'nim_nidn' => 'NIDN: 0412097801',
                 'faculty' => 'Fakultas Ilmu Komputer',
@@ -70,6 +200,21 @@ class DatabaseSeeder extends Seeder
         );
         $dosenUser->syncRoles([$dosenRole]);
 
+        // Role: DOSEN (Dosen Bisnis Digital)
+        $dosenBisnisUser = User::updateOrCreate(
+            ['email' => 'dosen.bisnis@digitech.ac.id'],
+            [
+                'name' => 'Dr. Ir. Rian Setiawan, S.E., M.M.',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'NIDN: 0405108202',
+                'faculty' => 'Fakultas Ekonomi & Bisnis Digital',
+                'major' => 'Bisnis Digital & FinTech (S1)',
+                'max_borrow_quota' => 15,
+            ]
+        );
+        $dosenBisnisUser->syncRoles([$dosenRole]);
+
+        // Role: MAHASISWA (Mahasiswa Informatika)
         $mahasiswaUser = User::updateOrCreate(
             ['email' => 'mahasiswa@digitech.ac.id'],
             [
@@ -82,6 +227,48 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $mahasiswaUser->syncRoles([$mahasiswaRole]);
+
+        // Role: MAHASISWA (Mahasiswa DKV)
+        $mahasiswa2User = User::updateOrCreate(
+            ['email' => 'mahasiswa2@digitech.ac.id'],
+            [
+                'name' => 'Anisa Putri Ramadhani',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'NIM: 23020119',
+                'faculty' => 'Fakultas Desain & Industri Kreatif',
+                'major' => 'Desain Komunikasi Visual (S1)',
+                'max_borrow_quota' => 5,
+            ]
+        );
+        $mahasiswa2User->syncRoles([$mahasiswaRole]);
+
+        // Role: TAMU (Peneliti Eksternal Terdaftar)
+        $tamuUser = User::updateOrCreate(
+            ['email' => 'tamu@digitech.ac.id'],
+            [
+                'name' => 'Surya Wijaya (Peneliti Eksternal)',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'GUEST-2026-001',
+                'faculty' => 'Badan Riset & Komunitas Akademik',
+                'major' => 'Peneliti Tamu Eksternal',
+                'max_borrow_quota' => 0,
+            ]
+        );
+        $tamuUser->syncRoles([$tamuRole]);
+
+        // Role: TAMU (Pengunjung Publik Umum)
+        $guestUser = User::updateOrCreate(
+            ['email' => 'guest@digitech.ac.id'],
+            [
+                'name' => 'Pengunjung Umum',
+                'password' => Hash::make('password'),
+                'nim_nidn' => 'GUEST-PUBLIC',
+                'faculty' => 'Masyarakat / Calon Mahasiswa',
+                'major' => 'Akses Publik Terbuka',
+                'max_borrow_quota' => 0,
+            ]
+        );
+        $guestUser->syncRoles([$tamuRole]);
 
         // 3. Categories
         $categoriesData = [
@@ -449,5 +636,23 @@ class DatabaseSeeder extends Seeder
                 'max_extend' => 2,
             ]
         );
+
+        // 8. Seed Initial Loan for Dosen User (Reading List & Riset)
+        $jurnalBook = Book::where('slug', 'jurnal-ilmiah-teknologi-rekayasa-komputer-vol-12-no-2')->first();
+        if ($jurnalBook) {
+            Loan::updateOrCreate(
+                ['loan_code' => 'PINJ-2026-065'],
+                [
+                    'user_id' => $dosenUser->id,
+                    'book_id' => $jurnalBook->id,
+                    'book_copy_id' => null,
+                    'borrow_date' => Carbon::now()->subDays(5)->toDateString(),
+                    'due_date' => Carbon::now()->addDays(25)->toDateString(),
+                    'status' => 'borrowed',
+                    'extend_count' => 0,
+                    'max_extend' => 3,
+                ]
+            );
+        }
     }
 }

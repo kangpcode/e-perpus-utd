@@ -31,6 +31,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('digipus-auth-token')->plainTextToken;
         $roles = $user->getRoleNames();
+        $permissions = $user->getAllPermissions()->pluck('name');
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -45,6 +46,7 @@ class AuthController extends Controller
                 'max_borrow_quota' => $user->max_borrow_quota,
                 'current_borrowed' => $user->activeLoans()->count(),
                 'roles' => $roles,
+                'permissions' => $permissions,
             ],
         ]);
     }
@@ -56,6 +58,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $roles = $user->getRoleNames();
+        $permissions = $user->getAllPermissions()->pluck('name');
 
         return response()->json([
             'id' => $user->id,
@@ -67,6 +70,7 @@ class AuthController extends Controller
             'max_borrow_quota' => $user->max_borrow_quota,
             'current_borrowed' => $user->activeLoans()->count(),
             'roles' => $roles,
+            'permissions' => $permissions,
         ]);
     }
 

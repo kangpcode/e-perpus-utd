@@ -20,6 +20,7 @@ export const useLibraryStore = defineStore('library', {
       currentBorrowed: 2,
       activeFine: 0,
     },
+    permissions: [],
     loans: [...MOCK_LOANS],
     wishlist: [1, 2], // book IDs
     activeDetailBook: null,
@@ -117,6 +118,7 @@ export const useLibraryStore = defineStore('library', {
         pustakawan: { email: 'pustakawan@digitech.ac.id', password: 'password' },
         dosen: { email: 'dosen@digitech.ac.id', password: 'password' },
         mahasiswa: { email: 'mahasiswa@digitech.ac.id', password: 'password' },
+        tamu: { email: 'tamu@digitech.ac.id', password: 'password' },
       }
 
       if (roleCredentials[role]) {
@@ -130,6 +132,7 @@ export const useLibraryStore = defineStore('library', {
             const data = await res.json()
             this.authToken = data.token
             localStorage.setItem('digipus_token', data.token)
+            this.permissions = data.user.permissions || []
             this.userProfile = {
               name: data.user.name,
               nim: data.user.nim_nidn,

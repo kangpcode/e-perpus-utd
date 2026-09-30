@@ -28,9 +28,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // Books CRUD & Reviews
-    Route::post('/books', [BookController::class, 'store']);
-    Route::delete('/books/{id}', [BookController::class, 'destroy']);
+    // Books Management (Admin & Pustakawan only)
+    Route::middleware('role:admin|pustakawan')->group(function () {
+        Route::post('/books', [BookController::class, 'store']);
+        Route::delete('/books/{id}', [BookController::class, 'destroy']);
+    });
+
+    // Book Reviews (Civitas akademika / authenticated users)
     Route::post('/books/{id}/reviews', [BookController::class, 'addReview']);
 
     // Loans / Circulation
