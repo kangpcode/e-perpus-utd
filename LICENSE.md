@@ -25,7 +25,7 @@ SOFTWARE.
 
 **DIGIPUS — Digital Library & Pustaka Digitech University**
 Platform Perpustakaan Terpadu Modern dengan Arsitektur SPA (Vue.js 3 + Laravel)
-Multi-Role RBAC · Sirkulasi Hybrid Fisik & E-Book · PWA Offline-First · Claymorphism UI
+Multi-Role RBAC · Sirkulasi Hybrid Fisik & E-Book · PWA Offline-First 
 
 Dibangun oleh Tim Pengembang Sistem Informasi
 Universitas Teknologi Digital (Digitech University)
