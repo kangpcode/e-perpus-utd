@@ -45,14 +45,7 @@
         <span class="text-[10px] mt-0.5">Role</span>
       </router-link>
 
-      <router-link
-        to="/clay-playground"
-        class="flex flex-col items-center py-1 px-2.5 rounded-xl transition-all"
-        :class="[$route.path === '/clay-playground' ? 'text-purple-600 font-bold scale-105' : 'text-slate-400 hover:text-slate-600']"
-      >
-        <Sparkles class="w-5 h-5" />
-        <span class="text-[10px] mt-0.5">Clay UI</span>
-      </router-link>
+
     </div>
   </nav>
 </template>
@@ -63,8 +56,7 @@ import {
   Home,
   BookOpen,
   Bookmark,
-  ShieldCheck,
-  Sparkles
+  ShieldCheck
 } from 'lucide-vue-next'
 
 const libraryStore = useLibraryStore()
